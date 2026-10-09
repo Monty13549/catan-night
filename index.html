@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catan Night — The Weekly Council of Settlers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Alegreya+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sea:#0a3a66; --deep:#041a33; --sand:#ecd29a; --parch:#f4e4bc; --wood:#6b3f1d;
+  --wood-dark:#3d220d; --gold:#ffcc33; --gold-deep:#c88a00; --ember:#ff5a1f; --ink:#2b1a0c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:"Alegreya Sans",system-ui,sans-serif; color:var(--ink);
+  background:
+    radial-gradient(ellipse at 50% 30%, #1a6aa8 0%, var(--sea) 40%, var(--deep) 100%);
+  background-attachment:fixed; overflow-x:hidden;
+}
+/* rolling sea */
+body::before,body::after{
+  content:""; position:fixed; inset:-50px; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='60'%3E%3Cpath d='M0 30 Q55 8 110 30 T220 30' fill='none' stroke='rgba(255,255,255,.10)' stroke-width='3'/%3E%3C/svg%3E");
+  animation:waves 18s linear infinite;
+}
+body::after{background-size:330px 90px; opacity:.6; animation-duration:31s; animation-direction:reverse}
+@keyframes waves{to{background-position:440px 120px}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50}
+
+.wrap{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:18px 18px 40px}
+
+/* ===== title ===== */
+header{text-align:center;padding:10px 0 4px;position:relative}
+h1{
+  font-family:"Cinzel Decorative",serif; font-weight:900; margin:0; line-height:.95;
+  font-size:clamp(46px,9vw,124px); letter-spacing:.02em;
+  background:linear-gradient(100deg,#7a4a00 0%,#ffe680 18%,#fff8d0 25%,#ffcc33 32%,#b06d00 50%,#ffe680 68%,#fffbe6 75%,#ffcc33 82%,#7a4a00 100%);
+  background-size:250% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 4px 0 #5a2f00) drop-shadow(0 10px 18px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(255,190,40,.45));
+  animation:shimmer 6s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+.sub{
+  font-family:"Cinzel",serif;font-weight:800;color:#fff3c4;font-size:clamp(14px,2vw,20px);
+  margin:8px 0 0;text-shadow:0 2px 0 #3d220d,0 0 14px rgba(255,200,80,.6)
+}
+.crest{font-size:clamp(28px,4vw,46px);display:inline-block;color:#000;-webkit-text-fill-color:#000;vertical-align:middle;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.crest.l{animation:sway 4s ease-in-out infinite}.crest.r{animation:sway 4s ease-in-out infinite reverse}
+@keyframes sway{50%{transform:rotate(-12deg) translateY(-4px)}}
+
+/* ===== week nav ===== */
+.weeknav{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0 6px;flex-wrap:wrap}
+.weekbadge{
+  font-family:"Cinzel",serif;font-weight:800;font-size:clamp(16px,2.2vw,24px);color:var(--ink);
+  padding:10px 26px;background:linear-gradient(#fff2c9,#e9cd85);border:3px solid var(--wood);
+  border-radius:40px;box-shadow:0 0 0 4px #e9b949,0 6px 0 4px var(--wood-dark),0 14px 28px rgba(0,0,0,.5);
+  min-width:290px;text-align:center
+}
+@media (max-width:560px){.weeknav{display:grid;grid-template-columns:50px 1fr 50px;gap:8px}.weekbadge{min-width:0;padding:8px 10px}#today{grid-column:1/-1;justify-self:center}}
+.weekbadge small{display:block;font-family:"Alegreya Sans";font-weight:700;font-size:13px;color:#7b4a22}
+
+button{font:inherit;cursor:pointer}
+.btn{
+  font-family:"Cinzel",serif;font-weight:800;font-size:15px;color:#fff8e1;
+  background:linear-gradient(#c0392b,#7d1c12);border:2px solid #ffcf6b;border-radius:12px;
+  padding:10px 16px;box-shadow:0 4px 0 #4a0f08,0 8px 16px rgba(0,0,0,.4);
+  text-shadow:0 1px 0 #000;transition:transform .08s, box-shadow .08s, filter .2s;
+}
+.btn:hover{filter:brightness(1.15) saturate(1.2)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4a0f08,0 4px 8px rgba(0,0,0,.4)}
+.btn.gold{background:linear-gradient(#ffe27a,#d39f12);color:var(--ink);text-shadow:0 1px 0 #fff6;box-shadow:0 4px 0 #7a5200,0 8px 16px rgba(0,0,0,.4)}
+.btn.green{background:linear-gradient(#3fb257,#1d6b2e);box-shadow:0 4px 0 #0d3a17,0 8px 16px rgba(0,0,0,.4)}
+.btn.round{width:50px;height:50px;padding:0;border-radius:50%;font-size:22px}
+.btn.small{font-size:13px;padding:6px 10px}
+.link{background:none;border:0;color:#7b4a22;text-decoration:underline;font-weight:700;padding:4px}
+:focus-visible{outline:4px solid #4fd1ff;outline-offset:3px}
+
+/* ===== layout ===== */
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr) 340px;gap:22px;align-items:start;margin-top:10px}
+@media (max-width:1150px){.grid{grid-template-columns:1fr 1fr}.boardcol{grid-column:1/-1;order:-1}}
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
+
+.panel{
+  position:relative;padding:22px 20px 20px;border-radius:18px;
+  background:
+    radial-gradient(circle at 20% 15%,rgba(255,255,255,.55),transparent 40%),
+    radial-gradient(circle at 80% 90%,rgba(160,100,30,.18),transparent 50%),
+    linear-gradient(135deg,#f8ebc8,#ead197);
+  border:5px solid var(--wood);
+  box-shadow:inset 0 0 0 3px #e7b84a,inset 0 0 40px rgba(120,70,10,.35),0 10px 0 var(--wood-dark),0 24px 40px rgba(0,0,0,.55);
+}
+.panel::before,.panel::after{content:"✦";position:absolute;top:6px;color:var(--gold-deep);font-size:18px}
+.panel::before{left:10px}.panel::after{right:10px}
+.panel h2{
+  font-family:"Cinzel",serif;font-weight:800;font-size:24px;margin:0 0 4px;text-align:center;color:#5a2a06;
+  text-shadow:0 1px 0 #fff8;
+}
+.hint{text-align:center;margin:0 0 14px;color:#6d4520;font-size:15px}
+.panel + .panel{margin-top:22px}
+
+/* ===== players ===== */
+.players{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.player{display:flex;align-items:center;gap:8px}
+.pchip{
+  flex:1;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;
+  background:#fff8e3;border:2px solid #c9a35a;text-align:left;font-weight:800;font-size:17px;color:var(--ink);
+  transition:transform .15s, box-shadow .2s;
+}
+.pchip .sw{width:26px;height:26px;flex:none;clip-path:polygon(50% 0,100% 40%,100% 100%,0 100%,0 40%);border:0;background:var(--c);box-shadow:inset 0 -5px 0 rgba(0,0,0,.25)}
+.pchip .you{margin-left:auto;font-size:12px;font-family:"Cinzel";color:#a0520a}
+.pchip.active{background:linear-gradient(#fff3b0,#ffd55a);border-color:#a06200;box-shadow:0 0 0 3px var(--c),0 0 22px 4px rgba(255,200,40,.9);transform:scale(1.03)}
+.pdel{background:none;border:0;font-size:20px;color:#8b2a1a;padding:4px 6px;border-radius:8px}
+.pdel:hover{background:#0001}
+.addform{display:grid;gap:10px;border-top:2px dashed #b88a3d;padding-top:14px}
+.addform input{
+  font:inherit;font-size:17px;font-weight:700;padding:10px 12px;border-radius:10px;border:2px solid #b88a3d;background:#fffaf0;color:var(--ink)
+}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.swatch{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:var(--c);box-shadow:0 0 0 2px #7b4a22,0 3px 6px rgba(0,0,0,.35);transition:transform .15s}
+.swatch[aria-pressed=true]{transform:scale(1.22);box-shadow:0 0 0 3px #000,0 0 14px 3px var(--c)}
+.swatch:disabled{opacity:.25;cursor:not-allowed}
+
+/* ===== board ===== */
+.boardcol{position:relative}
+.boardwrap{position:relative;aspect-ratio:1/1;max-width:820px;margin:0 auto}
+.boardwrap::before{
+  content:"";position:absolute;inset:-6%;border-radius:50%;z-index:-1;
+  background:repeating-conic-gradient(from 0deg,rgba(255,215,90,.32) 0deg 7deg,transparent 7deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 25%,transparent 70%);mask:radial-gradient(circle,#000 25%,transparent 70%);
+  animation:spin 80s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+svg#board{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 30px 30px rgba(0,0,0,.55))}
+.hex{cursor:pointer;outline:none}
+.deal{transform-box:fill-box;transform-origin:center;animation:deal .9s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes deal{from{transform:scale(0) rotate(-200deg);opacity:0}}
+.hex-inner{transform-box:fill-box;transform-origin:center;transition:transform .25s cubic-bezier(.3,1.8,.5,1),filter .25s}
+.hex:hover .hex-inner,.hex:focus-visible .hex-inner{transform:scale(1.07);filter:brightness(1.12) drop-shadow(0 0 16px #fff6b0)}
+.hex:focus-visible .rim{stroke:#4fd1ff;stroke-width:8}
+.glow{opacity:0;pointer-events:none}
+.hex.mine .mineRing{opacity:1}
+.mineRing{opacity:0;fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:14 10;animation:march 1.4s linear infinite;pointer-events:none}
+@keyframes march{to{stroke-dashoffset:-48}}
+.hex.best .glow{opacity:1;stroke:#ffe14d;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{stroke-width:16;stroke:#fff9c4}}
+.hex.allfree .glow{opacity:1;animation:rainbow 2s linear infinite}
+@keyframes rainbow{0%{stroke:#ff4d4d}20%{stroke:#ffb84d}40%{stroke:#fff04d}60%{stroke:#4dff88}80%{stroke:#4dc3ff}100%{stroke:#ff4d4d}}
+.piece{animation:drop .7s cubic-bezier(.3,1.6,.5,1) both}
+.piece.still{animation:none}
+@keyframes drop{0%{transform:translateY(-140px) rotate(-30deg);opacity:0}60%{opacity:1}}
+.boat{animation:bob 3.5s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) rotate(4deg)}}
+#robber{transition:transform 1s cubic-bezier(.5,-.5,.3,1.5)}
+.sunflag{animation:flutter 1s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:left center}
+@keyframes flutter{to{transform:skewY(-8deg) scaleX(.92)}}
+
+/* ===== verdict card ===== */
+.verdict{text-align:center}
+.bigday{
+  font-family:"Cinzel Decorative",serif;font-weight:900;font-size:clamp(34px,4vw,48px);line-height:1;margin:6px 0;
+  color:#b3260f;text-shadow:0 2px 0 #fff,0 4px 0 #6b1a0b,0 0 22px rgba(255,120,30,.6)
+}
+.count{font-weight:800;font-size:18px;color:#5a2a06}
+.names{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:20px;background:#fff8e3;border:2px solid var(--c);font-weight:800;font-size:14px}
+.tag i{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px #0004}
+.on{
+  margin:-6px -6px 12px;padding:14px 10px;border-radius:12px;color:#fff;
+  background:linear-gradient(120deg,#ff2d00,#ff9a00,#ff2d00);background-size:200% 100%;animation:fire 2s linear infinite;
+  font-family:"Cinzel Decorative",serif;font-weight:900;font-size:26px;text-shadow:0 2px 0 #6b0f00,0 0 16px #ffdd55;
+  box-shadow:0 0 30px 6px rgba(255,110,0,.7),inset 0 0 0 3px #ffe08a
+}
+@keyframes fire{to{background-position:200% 0}}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+select{font:inherit;font-weight:800;font-size:16px;padding:8px 10px;border-radius:10px;border:2px solid #b88a3d;background:#fffaf0;color:var(--ink)}
+.empty{font-size:17px;color:#6d4520;padding:10px 0}
+
+/* dice */
+.tray{display:flex;gap:26px;justify-content:center;margin:16px 0 10px;perspective:600px;height:64px}
+.die{width:54px;height:54px;position:relative;transform-style:preserve-3d;transition:transform 1.5s cubic-bezier(.2,.9,.25,1.05)}
+.face{position:absolute;inset:0;border-radius:10px;background:linear-gradient(145deg,#fffdf4,#e6dcc0);border:2px solid #b8a67a;
+  display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;box-shadow:inset 0 0 8px rgba(0,0,0,.2)}
+.face span{width:10px;height:10px;border-radius:50%;margin:auto;background:transparent}
+.face span.p{background:radial-gradient(circle at 35% 35%,#e74c3c,#7d1010)}
+.face.f1{transform:translateZ(27px)}.face.f6{transform:rotateY(180deg) translateZ(27px)}
+.face.f3{transform:rotateY(90deg) translateZ(27px)}.face.f4{transform:rotateY(-90deg) translateZ(27px)}
+.face.f5{transform:rotateX(90deg) translateZ(27px)}.face.f2{transform:rotateX(-90deg) translateZ(27px)}
+.hostline{font-family:"Cinzel",serif;font-weight:800;font-size:20px;color:#5a2a06;min-height:28px}
+
+/* chronicle */
+.chron{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:280px;overflow:auto}
+.chron li{background:#fff8e3;border:2px solid #d2ad62;border-left:8px solid #b3260f;border-radius:10px;padding:8px 10px;font-size:15px}
+.chron b{font-family:"Cinzel";font-size:15px}
+.board-vp{display:grid;gap:6px;margin:0 0 14px}
+.vp{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#fff3c4,#fff8e3);border:2px solid #d2ad62;border-radius:10px;padding:6px 10px;font-weight:800}
+.vp .pts{margin-left:auto;font-family:"Cinzel Decorative";font-size:20px;color:#b3260f}
+.vp.top{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(255,200,40,.8)}
+
+.share{display:grid;gap:10px}
+.status{margin:14px 0 0;padding:8px 10px;border-radius:10px;font-weight:800;font-size:14px;text-align:center;background:#fff8e3;border:2px solid #d2ad62}
+.status.live{border-color:#2f9e44;background:#eaf8e6}.status.offline{border-color:#f28a1a}
+.fine{font-size:13px;color:#6d4520;text-align:center;margin:10px 0 0}
+
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,140%);z-index:60;
+  background:linear-gradient(#3d220d,#1f1006);color:#ffe7a0;border:3px solid var(--gold);border-radius:14px;
+  padding:12px 20px;font-weight:800;font-size:17px;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 24px rgba(255,200,40,.5);
+  transition:transform .4s cubic-bezier(.3,1.6,.5,1);max-width:92vw;text-align:center
+}
+#toast.show{transform:translate(-50%,0)}
+.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <header>
+    <h1><span class="crest l">🐑</span> Catan Night <span class="crest r">🌾</span></h1>
+    <p class="sub">The weekly council of settlers. Claim the evenings you're free.</p>
+  </header>
+
+  <nav class="weeknav" aria-label="Choose week">
+    <button class="btn round" id="prev" aria-label="Previous week">◀</button>
+    <div class="weekbadge" id="weeklabel" aria-live="polite"></div>
+    <button class="btn round" id="next" aria-label="Next week">▶</button>
+    <button class="btn gold small" id="today">This week</button>
+  </nav>
+
+  <div class="grid">
+    <!-- settlers -->
+    <section class="panel" id="playersPanel" aria-labelledby="ph">
+      <h2 id="ph">⚒ The Settlers</h2>
+      <p class="hint" id="phint">Pick yourself, then tap every night you could play.</p>
+      <div class="players" id="players"></div>
+      <form class="addform" id="addform" autocomplete="off">
+        <input id="pname" maxlength="18" placeholder="Your name" aria-label="Your name" required>
+        <div class="swatches" id="swatches" role="group" aria-label="Pick your colour"></div>
+        <button class="btn green" type="submit">Join the island</button>
+      </form>
+    </section>
+
+    <!-- board -->
+    <section class="boardcol" aria-label="This week's board. Each hex is one evening.">
+      <div class="boardwrap"><svg id="board" viewBox="-390 -390 780 780" role="group"></svg></div>
+    </section>
+
+    <!-- verdict + log -->
+    <div>
+      <section class="panel verdict" aria-labelledby="vh">
+        <h2 id="vh">🏰 The Verdict</h2>
+        <div id="verdict"></div>
+      </section>
+      <section class="panel" aria-labelledby="sh">
+        <h2 id="sh">📜 Spread the Word</h2>
+        <div class="share">
+          <button class="btn gold" id="copylink">Copy share link</button>
+          <button class="btn small" id="copysum">Copy summary for the group chat</button>
+        </div>
+        <p class="status" id="status"></p>
+        <p class="fine" id="sharenote"></p>
+      </section>
+      <section class="panel" aria-labelledby="ch">
+        <h2 id="ch">👑 The Chronicle</h2>
+        <div class="board-vp" id="vp"></div>
+        <ul class="chron" id="chron"></ul>
+      </section>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const DAYS=[
+  {d:'Monday',s:'Mon',t:'Fields',e:'🌾',g:['#ffe98a','#d39f12']},
+  {d:'Tuesday',s:'Tue',t:'Hills',e:'🧱',g:['#f0956a','#a3401f']},
+  {d:'Wednesday',s:'Wed',t:'Forest',e:'🌲',g:['#5fb86a','#1d5228']},
+  {d:'Thursday',s:'Thu',t:'Pasture',e:'🐑',g:['#c4ee8a','#5ea33a']},
+  {d:'Friday',s:'Fri',t:'Mountains',e:'⛰️',g:['#c7ccd6','#4f5664']},
+  {d:'Saturday',s:'Sat',t:'Gold River',e:'💰',g:['#fff3a8','#e2a400']},
+  {d:'Sunday',s:'Sun',t:'Desert',e:'🌵',g:['#fbe8bb','#cfa65c']},
+];
+const COLORS=[['Red','#d7263d'],['Blue','#2563eb'],['Orange','#f28a1a'],['White','#f5f1e6'],['Green','#2f9e44'],['Brown','#7b4a22'],['Purple','#8e44ad'],['Teal','#13a3a3']];
+const R=100,D=Math.sqrt(3)*R,rad=a=>a*Math.PI/180;
+const POS=[-120,-60,0,60,120,180].map(a=>[D*Math.cos(rad(a)),D*Math.sin(rad(a))]);POS.push([0,0]);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- shared database (Firebase) ----------
+   Paste the firebaseConfig from the Firebase console here. Leave as null to run
+   on this device only, with the board carried inside the link. */
+const FIREBASE_CONFIG=null;
+
+const mem={};
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){mem[k]=v}},del:k=>{try{localStorage.removeItem(k)}catch(e){delete mem[k]}}};
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))};
+const newId=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('');
+const setHash=h=>{try{history.replaceState(null,'',h)}catch(e){try{location.hash=h.slice(1)}catch(e2){}}};
+
+let raw={},state={players:[],weeks:{}},fb=null,loaded=false,BOARD='local';
+let weekOffset=0,active=null,pickColor=null,lastDrop=null,spins=0,diceT=['',''];
+
+function setPath(o,path,v){let x=o;
+  for(let k=0;k<path.length-1;k++){if(!x[path[k]]||typeof x[path[k]]!=='object')x[path[k]]={};x=x[path[k]]}
+  if(v==null)delete x[path[path.length-1]];else x[path[path.length-1]]=v}
+function prune(o){for(const k in o){if(o[k]&&typeof o[k]==='object'){prune(o[k]);if(!Object.keys(o[k]).length)delete o[k]}}return o}
+function derive(){
+  state={players:Object.entries(raw.players||{}).filter(([,p])=>p).map(([id,p])=>({id,...p})).sort((a,b)=>(a.order||0)-(b.order||0)),weeks:{}};
+  for(const [k,w] of Object.entries(raw.weeks||{})){if(!w)continue;const free={};
+    for(const [d,m] of Object.entries(w.free||{}))if(m)free[d]=Object.keys(m);
+    state.weeks[k]={free,chosen:w.chosen??null,host:w.host??null,winner:w.winner??null}}
+  if(loaded&&active&&!state.players.some(p=>p.id===active))active=null;
+}
+// Every change is one small path write, so two people tapping at once never overwrite each other.
+function write(path,value){
+  setPath(raw,path,value);prune(raw);derive();
+  if(fb)fb.set(fb.ref(fb.db,`boards/${BOARD}/${path.join('/')}`),value).catch(()=>toast('That change didn’t save. Check your connection and tap again.'));
+  else{store.set('catan.raw',JSON.stringify(raw));setHash('#d='+enc(raw))}
+}
+function setStatus(mode){
+  const el=$('status');if(!el)return;
+  el.className='status '+mode;
+  el.textContent={live:'🟢 Live board: everyone with the link sees changes instantly.',
+    offline:'🟠 Reconnecting… your taps will sync when you’re back online.',
+    local:'🟡 Not connected to the shared database. This board lives on this device and inside the link.'}[mode];
+  $('sharenote').textContent=mode==='local'
+    ?'Send the link round; each person adds their nights and sends it back. The newest link is the true board.'
+    :'Bookmark this link. It’s the same board every week, and anyone you send it to can join.';
+}
+async function connect(){
+  if(!FIREBASE_CONFIG)return false;
+  const m=location.hash.match(/^#b=([a-z0-9]{12,})$/);
+  BOARD=m?m[1]:store.get('catan.board')||newId(14);
+  store.set('catan.board',BOARD);setHash('#b='+BOARD);
+  active=store.get('catan.active.'+BOARD);
+  try{
+    const B='https://www.gstatic.com/firebasejs/13.0.0/';
+    const [{initializeApp},{getDatabase,ref,set,onValue}]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-database.js')]);
+    const db=getDatabase(initializeApp(FIREBASE_CONFIG));fb={db,ref,set};
+    onValue(ref(db,'.info/connected'),snap=>setStatus(snap.val()?'live':'offline'));
+    onValue(ref(db,`boards/${BOARD}`),snap=>{raw=snap.val()||{};loaded=true;derive();render()},
+      ()=>{toast('The shared board refused the connection. The database rules may need publishing.');setStatus('offline')});
+    return true;
+  }catch(e){fb=null;toast('Couldn’t reach the shared database. Running on this device for now.');return false}
+}
+function loadLocal(){
+  BOARD='local';active=store.get('catan.active.local');
+  const m=location.hash.match(/^#d=(.+)$/);
+  if(m){try{raw=dec(m[1]);setTimeout(()=>toast('📜 Shared board loaded. Add your nights, then send the link back.'),900)}catch(e){}}
+  else{try{raw=JSON.parse(store.get('catan.raw'))||{}}catch(e){raw={}}}
+  if(!raw||typeof raw!=='object')raw={};
+  loaded=true;derive();setStatus('local');
+}
+const me=()=>player(active);
+const setActive=id=>{active=id;if(id)store.set('catan.active.'+BOARD,id);else store.del('catan.active.'+BOARD)};
+
+/* ---------- dates ---------- */
+function weekStart(){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7)+weekOffset*7);return d}
+const keyOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const dayDate=i=>{const d=weekStart();d.setDate(d.getDate()+i);return d};
+const fmt=(d,o)=>d.toLocaleDateString('en-GB',o);
+const wk=()=>keyOf(weekStart());
+function week(k=wk()){return state.weeks[k]||{free:{},chosen:null,host:null,winner:null}}
+const freeOn=(w,i)=>(w.free[i]||[]).filter(id=>state.players.some(p=>p.id===id));
+const player=id=>state.players.find(p=>p.id===id);
+
+/* ---------- board (static) ---------- */
+function pts(r,rot=-90){return [0,1,2,3,4,5].map(i=>{const a=rad(rot+60*i);return (r*Math.cos(a)).toFixed(1)+','+(r*Math.sin(a)).toFixed(1)}).join(' ')}
+function buildBoard(){
+  const emo=[[-52,-30],[52,-30],[-60,25],[60,25],[-30,62],[30,62],[0,-40]];
+  let s=`<defs>
+    <clipPath id="hc"><polygon points="${pts(93)}"/></clipPath>
+    <radialGradient id="tok" cx=".35" cy=".3"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e2c98c"/></radialGradient>
+    <radialGradient id="seaG"><stop offset=".6" stop-color="#1d7fc4"/><stop offset="1" stop-color="#0b4a80"/></radialGradient>
+    <linearGradient id="sandG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e2ad"/><stop offset="1" stop-color="#cfa65c"/></linearGradient>
+    ${DAYS.map((d,i)=>`<radialGradient id="g${i}" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="${d.g[0]}"/><stop offset="1" stop-color="${d.g[1]}"/></radialGradient>`).join('')}
+  </defs>
+  <polygon points="${pts(372,0)}" fill="url(#seaG)" stroke="#6b3f1d" stroke-width="14" stroke-linejoin="round"/>
+  <polygon points="${pts(372,0)}" fill="none" stroke="#e7b84a" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="${pts(305,0)}" fill="url(#sandG)" stroke="#a87d34" stroke-width="3"/>`;
+  [30,90,150,210,270,330].forEach((a,i)=>{const x=338*Math.cos(rad(a)),y=338*Math.sin(rad(a));
+    s+=`<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})"><g class="boat" style="animation-delay:${-i*.6}s"><text font-size="34" text-anchor="middle" y="6">⛵</text>
+    <text font-size="13" font-weight="800" fill="#fff" text-anchor="middle" y="26" font-family="Cinzel">${i%2?'2:1':'3:1'}</text></g></g>`});
+  DAYS.forEach((d,i)=>{const [x,y]=POS[i];
+    s+=`<g class="hex" data-i="${i}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})" tabindex="0" role="button">
+      <g class="deal" style="animation-delay:${.15+i*.12}s"><g class="hex-inner">
+        <polygon class="rim" points="${pts(100)}" fill="#f2dca6" stroke="#8a5f22" stroke-width="3"/>
+        <polygon points="${pts(92)}" fill="url(#g${i})" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+        <g clip-path="url(#hc)" opacity=".55" font-size="26" text-anchor="middle">${emo.map(([ex,ey])=>`<text x="${ex}" y="${ey}">${d.e}</text>`).join('')}</g>
+        <polygon class="glow" points="${pts(92)}" fill="none" stroke-width="10"/>
+        <polygon class="mineRing" points="${pts(84)}"/>
+        <g class="dyn"></g>
+      </g></g></g>`});
+  s+=`<g id="robber" style="transform:translate(-330px,330px)">
+      <ellipse cx="0" cy="22" rx="18" ry="6" fill="#0006"/>
+      <path d="M-15,22 C-15,0 -9,-8 -6,-12 A12,12 0 1 1 6,-12 C9,-8 15,0 15,22 Z" fill="#2a2a33" stroke="#000" stroke-width="2"/>
+      <circle cx="-4" cy="-24" r="3" fill="#fff6"/><title>The robber camps on nights nobody can make</title></g>`;
+  $('board').innerHTML=s;
+  document.querySelectorAll('.hex').forEach(h=>{
+    const i=+h.dataset.i;
+    h.addEventListener('click',()=>toggle(i));
+    h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(i)}});
+  });
+}
+const house=(c,cls)=>`<path class="piece ${cls}" d="M-11,10 L-11,-2 L0,-13 L11,-2 L11,10 Z" fill="${c}" stroke="#2b1a0c" stroke-width="2.5" stroke-linejoin="round"/><path class="piece ${cls}" d="M-11,10 L11,10 L11,6 L-11,6Z" fill="#0004"/>`;
+
+/* ---------- render ---------- */
+function render(){renderWeek();renderPlayers();renderBoard();renderVerdict();renderChronicle()}
+function renderWeek(){
+  const s=weekStart(),e=dayDate(6);
+  $('weeklabel').innerHTML=`Week of ${fmt(s,{weekday:'short',day:'numeric',month:'short'})}<small>${weekOffset===0?'This week':weekOffset===1?'Next week':weekOffset===-1?'Last week':fmt(s,{year:'numeric'})} · to ${fmt(e,{day:'numeric',month:'short'})}</small>`;
+}
+function renderPlayers(){
+  $('players').innerHTML=state.players.length?state.players.map(p=>`<div class="player">
+    <button class="pchip ${p.id===active?'active':''}" style="--c:${p.color}" data-id="${p.id}" aria-pressed="${p.id===active}">
+      <span class="sw"></span>${esc(p.name)}${p.id===active?'<span class="you">that’s you</span>':''}</button>
+    <button class="pdel" data-del="${p.id}" aria-label="Remove ${esc(p.name)}">✕</button></div>`).join('')
+    :`<p class="empty" style="text-align:center">The island is empty. Add the first settler below.</p>`;
+  const taken=state.players.map(p=>p.color);
+  if(!pickColor||taken.includes(pickColor))pickColor=(COLORS.find(c=>!taken.includes(c[1]))||[])[1]||null;
+  $('swatches').innerHTML=COLORS.map(([n,c])=>`<button type="button" class="swatch" style="--c:${c}" data-c="${c}" aria-label="${n}" aria-pressed="${c===pickColor}" ${taken.includes(c)?'disabled':''}></button>`).join('');
+  $('phint').textContent=me()?`Playing as ${me().name}. Tap the hexes for nights you're free.`:'Pick yourself, then tap every night you could play.';
+}
+function renderBoard(){
+  const w=week(),counts=DAYS.map((_,i)=>freeOn(w,i).length),max=Math.max(...counts),n=state.players.length;
+  document.querySelectorAll('.hex').forEach(h=>{
+    const i=+h.dataset.i,ids=freeOn(w,i),c=ids.length,d=dayDate(i),day=DAYS[i];
+    h.classList.toggle('best',max>0&&c===max&&!(n>1&&c===n));
+    h.classList.toggle('allfree',n>1&&c===n);
+    h.classList.toggle('mine',!!me()&&ids.includes(active));
+    h.setAttribute('aria-label',`${day.d} ${fmt(d,{day:'numeric',month:'long'})}, ${day.t}. ${c} of ${n} free${ids.length?': '+ids.map(id=>player(id).name).join(', '):''}${w.chosen===i?'. Game night is locked in.':''}`);
+    const pips=Math.min(c,5);
+    let g=`<rect x="-46" y="-80" width="92" height="26" rx="7" fill="#f8ebc8" stroke="#6b3f1d" stroke-width="2.5"/>
+      <text y="-61" text-anchor="middle" font-family="Cinzel" font-weight="800" font-size="16" fill="#3d220d">${day.s} ${d.getDate()}</text>
+      <circle cy="6" r="28" fill="url(#tok)" stroke="#6b4a1f" stroke-width="3"/>
+      <text y="17" text-anchor="middle" font-family="Cinzel Decorative" font-weight="900" font-size="30" fill="${max>0&&c===max?'#c0261c':'#2b1a0c'}">${c}</text>
+      ${Array.from({length:pips},(_,k)=>`<circle cx="${(k-(pips-1)/2)*6}" cy="26" r="2.2" fill="${max>0&&c===max?'#c0261c':'#2b1a0c'}"/>`).join('')}`;
+    ids.forEach((id,k)=>{const a=ids.length===1?90:-30+k*240/(ids.length-1),x=63*Math.cos(rad(a)),y=63*Math.sin(rad(a))+4;
+      const drop=lastDrop&&lastDrop.i===i&&lastDrop.id===id;
+      g+=`<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})">${house(player(id).color,drop?'':'still')}<title>${esc(player(id).name)}</title></g>`});
+    if(w.chosen===i)g+=`<g transform="translate(-6,-118)"><line x1="0" y1="0" x2="0" y2="44" stroke="#3d220d" stroke-width="4"/><path class="sunflag" d="M2,2 L46,10 L2,22 Z" fill="#e63312" stroke="#7d1010" stroke-width="2"/><text x="14" y="17" font-size="11">⚔️</text></g>`;
+    h.querySelector('.dyn').innerHTML=g;
+  });
+  lastDrop=null;
+  const empty=counts.findIndex(c=>c===0),rob=$('robber');
+  const [rx,ry]=empty>=0&&n?[POS[empty][0]+40,POS[empty][1]+30]:[-330,330];
+  rob.style.transform=`translate(${rx}px,${ry}px)`;
+}
+function renderVerdict(){
+  const w=week(),n=state.players.length,v=$('verdict');
+  if(!n){v.innerHTML=`<p class="empty">No settlers yet. Add yourself on the left to start the week.</p>`;return}
+  const counts=DAYS.map((_,i)=>freeOn(w,i).length),max=Math.max(...counts);
+  const tags=ids=>`<div class="names">${ids.map(id=>{const p=player(id);return `<span class="tag" style="--c:${p.color}"><i></i>${esc(p.name)}</span>`}).join('')}</div>`;
+  if(w.chosen!=null){
+    const i=w.chosen,ids=freeOn(w,i);
+    v.innerHTML=`<div class="on">🔥 Catan is on 🔥</div>
+      <div class="bigday">${DAYS[i].d}</div><div class="count">${fmt(dayDate(i),{day:'numeric',month:'long'})}</div>
+      ${ids.length?tags(ids):'<p class="empty">Nobody has claimed this night yet.</p>'}
+      <div class="tray"><div class="die" id="d1" style="transform:${diceT[0]}">${dieFaces()}</div><div class="die" id="d2" style="transform:${diceT[1]}">${dieFaces()}</div></div>
+      <div class="hostline" id="hostline">${w.host&&player(w.host)?`🏠 ${esc(player(w.host).name)} hosts`:''}</div>
+      <div class="row"><button class="btn gold" id="roll">🎲 Roll for host</button></div>
+      <div class="row"><label for="winner" style="font-weight:800;align-self:center">Who won?</label>
+        <select id="winner"><option value="">Not played yet</option>${state.players.map(p=>`<option value="${p.id}" ${w.winner===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="row"><button class="link" id="unlock">Unlock this night</button></div>`;
+    $('roll').onclick=roll;$('unlock').onclick=()=>{write(['weeks',wk(),'chosen'],null);write(['weeks',wk(),'host'],null);render();toast('Night unlocked. Back to the council.')};
+    $('winner').onchange=e=>{const id=e.target.value||null;write(['weeks',wk(),'winner'],id);renderChronicle();if(id){burst(220);toast(`👑 ${player(id).name} takes the crown. 10 victory points!`)}};
+    return;
+  }
+  if(max===0){v.innerHTML=`<p class="empty">No nights claimed yet. Pick yourself, then tap the hexes you're free.</p>`;return}
+  const best=counts.map((c,i)=>c===max?i:-1).filter(i=>i>=0);
+  v.innerHTML=`<div class="count">${best.length>1?'A tie for best night':'Best night so far'}</div>
+    <div class="bigday">${best.map(i=>DAYS[i].d).join(' or ')}</div>
+    <div class="count">${max===n&&n>1?'🎉 Everyone is free! 🎉':`${max} of ${n} settlers free`}</div>
+    ${tags(freeOn(w,best[0]))}
+    <div class="row">${best.map(i=>`<button class="btn" data-lock="${i}">Lock in ${DAYS[i].s} ${dayDate(i).getDate()}</button>`).join('')}</div>`;
+  v.querySelectorAll('[data-lock]').forEach(b=>b.onclick=()=>{const i=+b.dataset.lock;write(['weeks',wk(),'chosen'],i);write(['weeks',wk(),'host'],null);render();burst(260);toast(`⚔️ ${DAYS[i].d} is locked in. Let the trading begin!`)});
+}
+function renderChronicle(){
+  const weeks=Object.entries(state.weeks).filter(([,w])=>w.chosen!=null).sort((a,b)=>b[0].localeCompare(a[0]));
+  const wins={};weeks.forEach(([,w])=>{if(w.winner&&player(w.winner))wins[w.winner]=(wins[w.winner]||0)+1});
+  const lb=Object.entries(wins).sort((a,b)=>b[1]-a[1]);
+  $('vp').innerHTML=lb.map(([id,c],k)=>{const p=player(id);return `<div class="vp ${k===0?'top':''}"><span>${k===0?'👑':k===1?'🛡️':'⚒️'}</span>${esc(p.name)}<span class="pts">${c} win${c>1?'s':''}</span></div>`}).join('');
+  $('chron').innerHTML=weeks.length?weeks.map(([k,w])=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()+w.chosen);
+    return `<li><b>${fmt(d,{weekday:'long',day:'numeric',month:'short'})}</b><br>${freeOn(w,w.chosen).length} settler${freeOn(w,w.chosen).length===1?"":"s"}${w.host&&player(w.host)?` · hosted by ${esc(player(w.host).name)}`:''}${w.winner&&player(w.winner)?` · 👑 ${esc(player(w.winner).name)}`:''}</li>`}).join('')
+    :`<li style="border-left-color:#b88a3d">No game nights logged yet. Lock in a night and it lands here.</li>`;
+}
+
+/* ---------- actions ---------- */
+function toggle(i){
+  if(!me()){
+    $('playersPanel').classList.remove('shake');void $('playersPanel').offsetWidth;$('playersPanel').classList.add('shake');
+    toast(state.players.length?'Tap your name first so the board knows who you are.':'Add yourself as a settler first.');return}
+  const n=state.players.length,has=freeOn(week(),i).includes(active),wasAll=n>1&&freeOn(week(),i).length===n;
+  write(['weeks',wk(),'free',String(i),active],has?null:true);
+  if(!has)lastDrop={i,id:active};
+  renderBoard();renderVerdict();
+  if(!has&&!wasAll&&n>1&&freeOn(week(),i).length===n){burst(320);toast(`🎉 Everyone can make ${DAYS[i].d}! Lock it in.`)}
+  else if(!has)sparkAt(i);
+}
+function dieFaces(){const L={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  return [1,2,3,4,5,6].map(f=>`<div class="face f${f}">${Array.from({length:9},(_,k)=>`<span class="${L[f].includes(k)?'p':''}"></span>`).join('')}</div>`).join('')}
+function roll(){
+  const w=week(),pool=freeOn(w,w.chosen).length?freeOn(w,w.chosen):state.players.map(p=>p.id);
+  const a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6),ROT={1:[0,0],2:[90,0],3:[0,-90],4:[0,90],5:[-90,0],6:[0,180]};
+  spins++;
+  [[$('d1'),a],[$('d2'),b]].forEach(([el,v],j)=>{const [x,y]=ROT[v];diceT[j]=`rotateX(${720*spins+360*j+x}deg) rotateY(${720*spins+y}deg) rotateZ(${360*spins}deg)`;el.style.transform=diceT[j]});
+  $('roll').disabled=true;$('hostline').textContent='The dice are tumbling…';
+  setTimeout(()=>{const id=pool[(a+b)%pool.length];write(['weeks',wk(),'host'],id);
+    if(!$('hostline'))return;$('hostline').textContent=`🎲 ${a+b}! ${player(id).name} hosts`;$('roll').disabled=false;burst(160);renderChronicle()},reduced?50:1600);
+}
+$('players').addEventListener('click',e=>{
+  const del=e.target.closest('[data-del]');
+  if(del){const p=player(del.dataset.del);if(!confirm(`Remove ${p.name} from the island? Their nights go too.`))return;
+    write(['players',p.id],null);if(active===p.id)setActive(null);render();return}
+  const chip=e.target.closest('[data-id]');
+  if(chip){setActive(chip.dataset.id);render();toast(`Welcome back, ${me().name}. Claim your nights.`)}
+});
+$('swatches').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b&&!b.disabled){pickColor=b.dataset.c;renderPlayers()}});
+$('addform').addEventListener('submit',e=>{e.preventDefault();
+  const name=$('pname').value.trim();if(!name)return;
+  if(!pickColor){toast('Every colour is taken. Remove a settler to free one up.');return}
+  if(state.players.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast(`${name} is already on the island. Tap their name instead.`);return}
+  const id=newId(8);write(['players',id],{name,color:pickColor,order:Date.now()});setActive(id);$('pname').value='';
+  render();burst(120);toast(`🏠 ${name} has settled. Now tap the nights you're free.`);
+});
+$('prev').onclick=()=>{weekOffset--;render()};$('next').onclick=()=>{weekOffset++;render()};$('today').onclick=()=>{weekOffset=0;render()};
+const shareUrl=()=>location.href.split('#')[0]+(fb?'#b='+BOARD:'#d='+enc(raw));
+$('copylink').onclick=async()=>{const url=shareUrl();
+  try{if(navigator.share&&matchMedia('(pointer:coarse)').matches){await navigator.share({title:'Catan Night',text:'Add the nights you can play Catan:',url});return}
+    await navigator.clipboard.writeText(url);toast('🔗 Link copied. Paste it in the group chat.')}catch(e){prompt('Copy this link:',url)}};
+$('copysum').onclick=async()=>{const w=week(),n=state.players.length;
+  const lines=DAYS.map((d,i)=>{const ids=freeOn(w,i);return `${d.e} ${d.s} ${dayDate(i).getDate()}: ${ids.length}/${n}${ids.length?' ('+ids.map(id=>player(id).name).join(', ')+')':''}`});
+  const head=w.chosen!=null?`🔥 CATAN NIGHT IS ON: ${DAYS[w.chosen].d} ${fmt(dayDate(w.chosen),{day:'numeric',month:'short'})}${w.host&&player(w.host)?`, hosted by ${player(w.host).name}`:''}`:`🎲 Catan night, week of ${fmt(weekStart(),{day:'numeric',month:'short'})}. Who's free?`;
+  const txt=`${head}\n\n${lines.join('\n')}\n\nAdd your nights: ${shareUrl()}`;
+  try{await navigator.clipboard.writeText(txt);toast('📋 Summary copied. Paste it in the chat.')}catch(e){prompt('Copy this:',txt)}};
+
+/* ---------- toast ---------- */
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3200)}
+
+/* ---------- particles: gold dust + confetti ---------- */
+const cv=$('fx'),cx=cv.getContext('2d');let P=[],W,H;
+function size(){W=cv.width=innerWidth*devicePixelRatio;H=cv.height=innerHeight*devicePixelRatio}size();addEventListener('resize',size);
+if(!reduced)for(let k=0;k<45;k++)P.push({dust:1,x:Math.random()*W,y:Math.random()*H,vx:0,vy:-(.2+Math.random()*.5),s:1+Math.random()*2.5,a:Math.random()*6});
+function burst(n,ox=W/2,oy=H*.4){if(reduced)return;const cols=['#ffcc33','#fff3a8','#e63312','#2f9e44','#2563eb','#f28a1a',...state.players.map(p=>p.color)];
+  for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2,v=(4+Math.random()*12)*devicePixelRatio;
+    P.push({x:ox,y:oy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-6*devicePixelRatio,s:(5+Math.random()*7)*devicePixelRatio,c:cols[k%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,life:140+Math.random()*60,hex:Math.random()<.35})}}
+function sparkAt(i){const b=$('board').getBoundingClientRect(),s=b.width/780;burst(40,(b.left+(POS[i][0]+390)*s)*devicePixelRatio,(b.top+(POS[i][1]+390)*s)*devicePixelRatio)}
+function hexPath(s){cx.beginPath();for(let k=0;k<6;k++){const a=rad(60*k-90);cx.lineTo(Math.cos(a)*s,Math.sin(a)*s)}cx.closePath()}
+(function tick(){cx.clearRect(0,0,W,H);
+  P=P.filter(p=>{
+    if(p.dust){p.y+=p.vy*devicePixelRatio;p.a+=.02;p.x+=Math.sin(p.a)*.4;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}
+      cx.globalAlpha=.35+.35*Math.sin(p.a*2);cx.fillStyle='#ffd966';cx.beginPath();cx.arc(p.x,p.y,p.s*devicePixelRatio,0,7);cx.fill();return true}
+    p.vy+=.35*devicePixelRatio;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life--;
+    cx.globalAlpha=Math.min(1,p.life/40);cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;
+    if(p.hex){hexPath(p.s*.8);cx.fill()}else cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore();
+    return p.life>0&&p.y<H+40});
+  cx.globalAlpha=1;requestAnimationFrame(tick)})();
+
+buildBoard();
+connect().then(ok=>{if(!ok)loadLocal();render()});
+render();
+</script>
+</body>
+</html>
