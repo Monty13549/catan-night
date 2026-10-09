@@ -293,10 +293,12 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- shared database (Firebase) ----------
-   Paste the firebaseConfig from the Firebase console here. Leave as null to run
-   on this device only, with the board carried inside the link. */
-const FIREBASE_CONFIG=null;
+/* ---------- shared database (Firebase) ---------- */
+const FIREBASE_CONFIG={
+  databaseURL:"https://catan-night-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"catan-night",
+  appId:"1:352307094302:web:23e7723ddad53e52961f0f"
+};
 
 const mem={};
 const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){mem[k]=v}},del:k=>{try{localStorage.removeItem(k)}catch(e){delete mem[k]}}};
@@ -338,18 +340,34 @@ function setStatus(mode){
 async function connect(){
   if(!FIREBASE_CONFIG)return false;
   const m=location.hash.match(/^#b=([a-z0-9]{12,})$/);
-  BOARD=m?m[1]:store.get('catan.board')||newId(14);
+  const legacy=location.hash.match(/^#d=(.+)$/);
+  let seed=null,isNew=false;
+  if(!m){
+    if(legacy){try{seed=dec(legacy[1])}catch(e){}}
+    else{try{seed=JSON.parse(store.get('catan.raw'))}catch(e){}}
+  }
+  const saved=!legacy&&store.get('catan.board');
+  BOARD=m?m[1]:saved||newId(14);isNew=!m&&!saved;
   store.set('catan.board',BOARD);setHash('#b='+BOARD);
-  active=store.get('catan.active.'+BOARD);
+  active=store.get('catan.active.'+BOARD)||(seed&&store.get('catan.active.local'));
+  if(active)store.set('catan.active.'+BOARD,active);
   try{
     const B='https://www.gstatic.com/firebasejs/13.0.0/';
     const [{initializeApp},{getDatabase,ref,set,onValue}]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-database.js')]);
     const db=getDatabase(initializeApp(FIREBASE_CONFIG));fb={db,ref,set};
+    if(isNew&&seed&&typeof seed==='object'&&Object.keys(seed).length)await set(ref(db,`boards/${BOARD}`),seed);
     onValue(ref(db,'.info/connected'),snap=>setStatus(snap.val()?'live':'offline'));
     onValue(ref(db,`boards/${BOARD}`),snap=>{raw=snap.val()||{};loaded=true;derive();render()},
       ()=>{toast('The shared board refused the connection. The database rules may need publishing.');setStatus('offline')});
     return true;
-  }catch(e){fb=null;toast('Couldn’t reach the shared database. Running on this device for now.');return false}
+  }catch(e){
+    fb=null;
+    if(seed&&typeof seed==='object'){
+      store.set('catan.raw',JSON.stringify(seed));
+      setHash('#d='+enc(seed));
+    }
+    toast('Couldn’t reach the shared database. Running on this device for now.');return false
+  }
 }
 function loadLocal(){
   BOARD='local';active=store.get('catan.active.local');
